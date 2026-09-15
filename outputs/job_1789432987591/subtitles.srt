@@ -1,0 +1,153 @@
+1
+00:00:00,080 --> 00:00:05,884
+실제 고객이 우리에게 “올해는 이혼을 막아준 것 같아”라고 말한 적이 있습니다.
+We've had real customers say to us, "This year, I think you've saved me from getting a divorce."
+
+2
+00:00:05,894 --> 00:00:12,708
+[음악] Fixer는 고객, 동료, 그리고
+[music] Fixer is an AI assistant for people managing clients, colleagues, and
+
+3
+00:00:12,718 --> 00:00:19,750
+일상 대화를 관리하며 중요한 것을 놓치지 않도록 돕는 AI 어시스턴트입니다. 이혼 상담가, 그는 실제 인물이며 정말 훌륭합니다.
+conversations every day to make sure they don't miss anything important. The divorce guy, he's real and just awesome.
+
+4
+00:00:19,760 --> 00:00:26,629
+그의 이름은 마이크입니다. 그는 상업용 부동산 매니저로, 수백 개의 부동산과 수백 명의 사람들을 관리합니다. 그래서 하루 종일
+He's called Mike. He's a commercial real estate manager, managing hundreds of different properties, hundreds of different people. and so all day on the
+
+5
+00:00:26,640 --> 00:00:32,709
+도로에서 문자 메시지를 보낼 수 없고, 저녁에 집에 돌아와 이메일을 따라잡아야 합니다. 하루에 1~2시간 정도
+road can't text while driving and so comes home in the evening and has to like catch up on emails and that 1 to
+
+6
+00:00:32,719 --> 00:00:39,670
+가족과 제대로 시간을 보낼 수 없습니다. 우리는 마이크가 노트북을 열었을 때
+two hours a day he's unable to like have proper family time. We want Mike to get to a place that when he opens his laptop
+
+7
+00:00:39,679 --> 00:00:46,069
+우선순위가 이미 정해져 있는 상태가 되길 원합니다. 모든 메일이 읽혔고, 정리되었으며,
+the prioritizing has already been done for him. It's all been read. It's all been sorted and all the stuff that
+
+8
+00:00:46,079 --> 00:00:51,109
+실제로 필요한 내용이 바로 상단에 표시됩니다. Fixer는 팀 전체에 걸쳐 멀티플라이어 역할을 합니다.
+actually needs him is right there at the top. fix and multipliers across the team
+
+9
+00:00:51,119 --> 00:00:58,389
+즉, 모든 사람이 중요한 일에 협업할 수 있어 놓치는 일이 없도록 합니다. [음악]
+now, meaning everyone can collaborate on anything important to avoid anything slipping through the cracks. [music]
+
+10
+00:00:58,399 --> 00:01:04,069
+우리는 이 사무실에서 6개월째 근무하고 있습니다. 이제 모두 같은 층에 있는 것 같아요. [음악] 우리는 모두 함께 점심을 먹습니다.
+We've been in this office 6 months. I think we're all in the same floor [music] now. Like we all have lunch
+
+11
+00:01:04,079 --> 00:01:09,349
+같이 먹으며 좋은 분위기를 느낍니다. >> 우리는 이미 ChatGPT가
+together and it's just like a nice vibe. &gt;&gt; We already know that chat GBT is like
+
+12
+00:01:09,359 --> 00:01:13,590
+Fixer 외에 고객들이 가장 많이 사용하는 두 번째 AI 도구라는 것을 알고 있습니다.
+the second biggest AI tool that our customers use besides Fixer.
+
+13
+00:01:13,599 --> 00:01:21,030
+>> 그들의 모델은 명백히 최첨단입니다. 새로운 모델이 출시될 때마다 훌륭한 것을 만들기가 정말 쉽습니다.
+&gt;&gt; I mean, their models are obviously just state-of-the-art. So when they release a new model, it's really easy to create something really good.
+
+14
+00:01:21,039 --> 00:01:28,390
+>> 이곳은 실제 작업이 이루어지는 엔지니어링 부서입니다. 조이 엘로노라 데이비드입니다. 그들은
+&gt;&gt; This [music] is engineering where all the real work happens. This is Joey Elonora David. They work closely with
+
+15
+00:01:28,400 --> 00:01:33,990
+OpenAI와 긴밀히 협력합니다. >> 회사 첫날, 저는 CTO 매트와 만나 '좋아,'라고 말했습니다.
+OpenAI. &gt;&gt; Literally my first day at the company, I met with Mat CTO and he was like, "Okay,
+
+16
+00:01:34,000 --> 00:01:40,069
+당신의 일은 우리가 사람들에게 제공하는 초안을 더 나은 것으로 만드는 방법을 찾는 것이라고 했습니다. 다양한 부분이
+your job is going to be to figure out a way to make the drafts that we generate for people better." Various parts of
+
+17
+00:01:40,079 --> 00:01:45,270
+이 흐름은 OpenAI를 사용해 통합됩니다. 그래서 우리는 모든 것에 OpenAI 모델을 사용합니다.
+that flow are integrated using OpenAI. So we use open AI models for everything
+
+18
+00:01:45,280 --> 00:01:52,229
+이메일을 소화해 실제 내용이 무엇인지 파악하고,
+from digesting the email so we can break down and understand what the email is actually about to pulling in and
+
+19
+00:01:52,240 --> 00:01:58,229
+우리가 포함하고 싶은 컨텍스트를 재정렬합니다. OpenAI 팀과 함께 일하며 놀라운 경험을 했습니다.
+reranking the context that we want to include. We've had an amazing experience working with the team at OpenAI getting
+
+20
+00:01:58,240 --> 00:02:05,030
+모델을 개선하고 비용을 절감하며 효율성을 높이는 방법에 대한 의견을 듣고, 실제로 일부 기술적인
+their thoughts on how we can improve our models, how we can improve cost, how we can make things more efficient and actually getting some of that technical
+
+21
+00:02:05,040 --> 00:02:11,349
+입력을 얻었습니다. [음악] >> 그래서 GPT-3가 출시된 순간이었습니다. 그때 저는
+input as well. [music] &gt;&gt; So it was the release of GPT3. It was the moment where I just like got
+
+22
+00:02:11,360 --> 00:02:18,789
+예상했던 정확한 답을 받았습니다. 그래서 형이 전화를 걸어 '실제로 작동 중이야'라고 했습니다. 우리는 경영진용 [음악] 어시스턴트를 만들고 있습니다.
+exactly the answer back that I expected. So my brother called me and he was like, "It's actually working." We've been building an executive [music] assistant
+
+23
+00:02:18,800 --> 00:02:26,056
+에이전시를 함께 구축했지만, Fixer를 가능하게 한 것은 OpenAI였습니다. 50만 시간의
+agency together, but it was OpenAI that actually made Fixer possible. It allowed us to learn from the 500,000 hours
+
+24
+00:02:26,066 --> 00:02:32,389
+[음악] EA 워크플로우를 단 몇 달 만에 학습할 수 있게 해 주었습니다. 그 결과 첫 해에 우리는 0에서 3천만
+[music] of EA workflows in just a matter of months. And the result of that was in our first year, we went from zero to 30
+
+25
+00:02:32,400 --> 00:02:38,949
+달러 ARR로 성장했습니다. [음악] Fixer가 비즈니스로 성공하고
+million in ARR. [music] One of the real keys for Vixer succeeding as a business and delivering
+
+26
+00:02:38,959 --> 00:02:46,150
+다른 누구보다 나은 제품을 제공하는 핵심은 고객을 깊이 이해하는 힘든 작업을 수행하는 것이었습니다. 그리고 그때 OpenAI가
+a better product than anyone else has literally just been about doing the hard work of learning our customer really well. And what Open AI was then really
+
+27
+00:02:46,159 --> 00:02:50,868
+우리에게 결정적이었던 것은 그 학습을 모델에 성공적으로 반영할 수 있었던 점이었습니다.
+pivotal for us in doing was being able to take that learning and successfully
+
+28
+00:02:50,878 --> 00:02:57,030
+모델이 작동하는 방식에 통합하는 것이었습니다. YC 정신이 완전히
+incorporate it into how the models work. I can see the YC mentality is absolutely
+
+29
+00:02:57,039 --> 00:03:04,069
+OpenAI 팀에 코딩되어 있는 것을 볼 수 있습니다. 언제든지 슬랙에 질문을 던지면
+coded into the OpenAI team. At any moment, I can drop a question in Slack [music] and I've got an answer coming
+
+30
+00:03:04,080 --> 00:03:10,308
+빠르게 답이 돌아옵니다. 저는 매우 기업가적이고 역동적인 팀을 느낍니다. 솔직히 말하면
+out pretty quickly. I've got what feels like a very kind of entrepreneurial [music] and dynamic team. Honestly, it
+
+31
+00:03:10,318 --> 00:03:15,000
+feels like a five-star hotel.
