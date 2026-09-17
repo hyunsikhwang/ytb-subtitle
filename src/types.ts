@@ -31,7 +31,7 @@ export interface PipelineProgress {
 export interface VideoMetadata {
   id: string;
   title: string;
-  sourceType: 'youtube' | 'upload' | 'sample' | 'url';
+  sourceType: 'youtube' | 'instagram' | 'upload' | 'sample' | 'url';
   originalUrl?: string;
   videoUrl: string;
   audioUrl?: string;

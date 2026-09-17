@@ -94,3 +94,4 @@ export const SAMPLE_SEGMENTS: SubtitleSegment[] = [
 ];
 
 export const PROMPT_SAMPLE_YOUTUBE_URL = "https://www.youtube.com/watch?v=ctWJw8sQghk";
+export const PROMPT_SAMPLE_INSTAGRAM_URL = "https://www.instagram.com/reel/Dc2zOgkhFtc/?utm_source=ig_web_copy_link&stkn=NTc4MTIwNjQ2YQ==";

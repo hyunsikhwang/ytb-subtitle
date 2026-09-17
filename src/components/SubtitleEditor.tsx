@@ -11,11 +11,14 @@ import {
   Split,
   FileCheck2,
   Check,
+  CheckCheck,
   AlertCircle,
-  Film
+  Film,
+  Wand2
 } from 'lucide-react';
 import { SubtitleSegment } from '../types';
-import { formatTimestamp, parseTimestamp } from '../utils/srtParser';
+import { formatTimestamp, parseTimestamp, cleanSubtitleText } from '../utils/srtParser';
+import { safeFetchJson } from '../utils/apiHelper';
 
 interface SubtitleEditorProps {
   segments: SubtitleSegment[];
@@ -39,12 +42,24 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
   const [findWord, setFindWord] = useState('');
   const [replaceWord, setReplaceWord] = useState('');
   const [translatingId, setTranslatingId] = useState<number | null>(null);
+  const [correctingId, setCorrectingId] = useState<number | null>(null);
   const [isCleaningAll, setIsCleaningAll] = useState(false);
+  const [isCorrectingContext, setIsCorrectingContext] = useState(false);
   const [isFillingBlanks, setIsFillingBlanks] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
   const blankCount = useMemo(() => {
     return segments.filter((s) => !s.translatedText || !/[가-힣]/.test(s.translatedText)).length;
+  }, [segments]);
+
+  const artifactCount = useMemo(() => {
+    return segments.filter((s) =>
+      /&(?:gt|lt|amp|quot|#39);/i.test(s.originalText || '') ||
+      /&(?:gt|lt|amp|quot|#39);/i.test(s.translatedText || '') ||
+      /^\s*>>/m.test(s.originalText || '') ||
+      /^\s*>>/m.test(s.translatedText || '')
+    ).length;
   }, [segments]);
 
   const activeCardRef = useRef<HTMLDivElement>(null);
@@ -106,7 +121,7 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
   const handleTranslateSingle = async (seg: SubtitleSegment) => {
     setTranslatingId(seg.id);
     try {
-      const res = await fetch('/api/subtitles/translate-single', {
+      const { ok, data } = await safeFetchJson('/api/subtitles/translate-single', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -114,8 +129,7 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
           model: 'openai/gpt-oss-20b'
         })
       });
-      const data = await res.json();
-      if (data.translatedText) {
+      if (ok && data?.translatedText) {
         handleFieldChange(seg.id, 'translatedText', data.translatedText);
       }
     } catch (err) {
@@ -125,12 +139,55 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
     }
   };
 
-  // AI Clean & re-translate all segments with gpt-oss-20b
-  const handleCleanAll = async () => {
-    if (isCleaningAll || segments.length === 0) return;
-    setIsCleaningAll(true);
+  // AI Single segment context-aware speech recognition correction
+  const handleCorrectSingle = async (seg: SubtitleSegment, index: number) => {
+    setCorrectingId(seg.id);
     try {
-      const res = await fetch('/api/subtitles/clean-all', {
+      const prevText = index > 0 ? (segments[index - 1]?.translatedText || segments[index - 1]?.originalText || '') : '';
+      const nextText = index < segments.length - 1 ? (segments[index + 1]?.translatedText || segments[index + 1]?.originalText || '') : '';
+      const targetText = seg.translatedText || seg.originalText;
+
+      const { ok, data } = await safeFetchJson('/api/subtitles/correct-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: targetText,
+          prevText,
+          nextText,
+          model: 'openai/gpt-oss-20b'
+        })
+      });
+      if (ok && data?.correctedText) {
+        handleFieldChange(seg.id, 'translatedText', data.correctedText);
+        if (/[가-힣]/.test(seg.originalText)) {
+          handleFieldChange(seg.id, 'originalText', data.correctedText);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to correct single line:', err);
+    } finally {
+      setCorrectingId(null);
+    }
+  };
+
+  // Instant remove HTML entities and artifacts (&gt;, >>, [Music], etc.)
+  const handleCleanArtifacts = () => {
+    const updated = segments.map((seg) => ({
+      ...seg,
+      originalText: cleanSubtitleText(seg.originalText),
+      translatedText: cleanSubtitleText(seg.translatedText)
+    }));
+    onUpdateSegments(updated);
+    setNoticeMessage('자막 내 특수문자 및 HTML 기호(&gt;, &lt; 등)가 말끔히 제거되었습니다.');
+    setTimeout(() => setNoticeMessage(null), 3500);
+  };
+
+  // AI Context-aware speech recognition & typo correction for all segments
+  const handleCorrectContext = async () => {
+    if (isCorrectingContext || segments.length === 0) return;
+    setIsCorrectingContext(true);
+    try {
+      const { ok, data, error } = await safeFetchJson('/api/subtitles/correct-context', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -138,9 +195,37 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
           model: 'openai/gpt-oss-20b'
         })
       });
-      const data = await res.json();
-      if (data.success && data.segments) {
+      if (ok && data?.success && data.segments) {
         onUpdateSegments(data.segments);
+        setNoticeMessage('소리/발음 표기 오탈자("조름운전" ➔ "졸음운전" 등) 및 음성인식 문맥 교정이 완료되었습니다.');
+        setTimeout(() => setNoticeMessage(null), 4500);
+      } else if (error) {
+        setNoticeMessage(`교정 알림: ${error}`);
+      }
+    } catch (err) {
+      console.error('Failed to correct context subtitles:', err);
+    } finally {
+      setIsCorrectingContext(false);
+    }
+  };
+
+  // AI Clean & re-translate all segments with gpt-oss-20b
+  const handleCleanAll = async () => {
+    if (isCleaningAll || segments.length === 0) return;
+    setIsCleaningAll(true);
+    try {
+      const { ok, data, error } = await safeFetchJson('/api/subtitles/clean-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          segments,
+          model: 'openai/gpt-oss-20b'
+        })
+      });
+      if (ok && data?.success && data.segments) {
+        onUpdateSegments(data.segments);
+      } else if (error) {
+        setNoticeMessage(`재번역 알림: ${error}`);
       }
     } catch (err) {
       console.error('Failed to clean all subtitles:', err);
@@ -154,7 +239,7 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
     if (isFillingBlanks || blankCount === 0) return;
     setIsFillingBlanks(true);
     try {
-      const res = await fetch('/api/subtitles/fill-blanks', {
+      const { ok, data, error } = await safeFetchJson('/api/subtitles/fill-blanks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -162,9 +247,10 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
           model: 'openai/gpt-oss-20b'
         })
       });
-      const data = await res.json();
-      if (data.success && data.segments) {
+      if (ok && data?.success && data.segments) {
         onUpdateSegments(data.segments);
+      } else if (error) {
+        setNoticeMessage(`빈칸 번역 알림: ${error}`);
       }
     } catch (err) {
       console.error('Failed to fill blank subtitles:', err);
@@ -302,7 +388,34 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Quick Clean Artifacts Button (shown if &gt;, >>, etc. detected) */}
+          {artifactCount > 0 && (
+            <button
+              onClick={handleCleanArtifacts}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-300 shadow-xs active:scale-95 transition-all"
+              title="자막에 남아있는 &gt;, &lt; 등의 HTML 기호 및 화자 표시를 즉시 정리합니다"
+            >
+              <Wand2 className="w-3.5 h-3.5 text-sky-600" />
+              <span>기호 즉시 정리 ({artifactCount})</span>
+            </button>
+          )}
+
+          {/* Context-aware Speech Recognition, Phonetic Spelling & Typo Correction */}
+          <button
+            onClick={handleCorrectContext}
+            disabled={isCorrectingContext || segments.length === 0}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              isCorrectingContext
+                ? 'bg-indigo-100 text-indigo-500 cursor-not-allowed'
+                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 shadow-xs active:scale-95'
+            }`}
+            title="발음/소리 나는 대로 적힌 오류('조름운전' ➔ '졸음운전', '구지' ➔ '굳이', '할 쑤' ➔ '할 수' 등) 및 동음이의어 문맥 오타를 AI로 교정합니다"
+          >
+            <CheckCheck className={`w-3.5 h-3.5 ${isCorrectingContext ? 'animate-spin text-indigo-600' : 'text-indigo-600'}`} />
+            <span>{isCorrectingContext ? '교정 중...' : 'AI 문맥/발음 오탈자 교정'}</span>
+          </button>
+
           {/* Fill Blanks Button (shown when any segments are missing Korean) */}
           {blankCount > 0 && (
             <button
@@ -329,10 +442,10 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
                 ? 'bg-amber-100 text-amber-500 cursor-not-allowed'
                 : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 shadow-xs active:scale-95'
             }`}
-            title="GPT-OSS로 전체 자막을 매끄러운 방송용 한국어로 재번역 및 클렌징"
+            title="전체 자막을 매끄러운 방송용 한국어로 재번역 및 클렌징"
           >
             <Sparkles className={`w-3.5 h-3.5 ${isCleaningAll ? 'animate-spin text-amber-600' : 'text-amber-600'}`} />
-            <span>{isCleaningAll ? '클렌징 중...' : '전체 AI 재번역'}</span>
+            <span>{isCleaningAll ? '재번역 중...' : '전체 AI 재번역'}</span>
           </button>
 
           {/* Re-mux button */}
@@ -358,6 +471,22 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Notice Alert Banner */}
+      {noticeMessage && (
+        <div className="bg-emerald-50 border-b border-emerald-200 px-3.5 py-2 text-xs text-emerald-800 flex items-center justify-between animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="font-medium">{noticeMessage}</span>
+          </div>
+          <button
+            onClick={() => setNoticeMessage(null)}
+            className="text-emerald-600 hover:text-emerald-900 font-bold ml-2 text-xs"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Search & Tool Bar */}
       <div className="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -434,7 +563,7 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
             검색 결과가 없습니다.
           </div>
         ) : (
-          filteredSegments.map((seg) => {
+          filteredSegments.map((seg, index) => {
             const isActive = currentSegmentId === seg.id;
             return (
               <div
@@ -511,8 +640,18 @@ export const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
                     </div>
                   </div>
 
-                  {/* Actions: AI Translate, Split, Add, Delete */}
+                  {/* Actions: AI Translate, Context Correction, Split, Add, Delete */}
                   <div className="flex items-center gap-1 text-[11px]">
+                    <button
+                      onClick={() => handleCorrectSingle(seg, index)}
+                      disabled={correctingId === seg.id}
+                      className="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center gap-1 transition-colors font-medium"
+                      title="앞뒤 문맥과 발음 표기 규칙('조름운전' ➔ '졸음운전' 등)을 바탕으로 올바르게 교정합니다"
+                    >
+                      <CheckCheck className={`w-3 h-3 ${correctingId === seg.id ? 'animate-spin' : ''}`} />
+                      <span className="hidden sm:inline">문맥/발음 교정</span>
+                    </button>
+
                     <button
                       onClick={() => handleTranslateSingle(seg)}
                       disabled={translatingId === seg.id}

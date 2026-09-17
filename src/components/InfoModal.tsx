@@ -39,7 +39,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose }) => {
             <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
               <p className="font-semibold text-slate-900">1. 영상 준비</p>
               <p className="text-slate-600 mt-0.5">
-                YouTube(yt-dlp) 링크 또는 사용자 업로드 영상/음성을 준비합니다.
+                YouTube 및 Instagram(릴스/게시물) 링크 또는 사용자 업로드 영상/음성을 준비합니다.
               </p>
             </div>
             <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   Youtube,
+  Instagram,
   Upload,
   PlayCircle,
   Settings2,
@@ -13,11 +14,13 @@ import {
   Zap,
   Check
 } from 'lucide-react';
-import { PROMPT_SAMPLE_YOUTUBE_URL } from '../data/sampleData';
+import { PROMPT_SAMPLE_YOUTUBE_URL, PROMPT_SAMPLE_INSTAGRAM_URL } from '../data/sampleData';
+import { isInstagramUrl, extractYoutubeId } from '../utils/srtParser';
 
 interface InputSectionProps {
   onStartPipeline: (params: {
     youtubeUrl?: string;
+    instagramUrl?: string;
     directUrl?: string;
     mediaFile?: File | null;
     useSample?: boolean;
@@ -31,8 +34,9 @@ export const InputSection: React.FC<InputSectionProps> = ({
   onStartPipeline,
   isProcessing
 }) => {
-  const [activeTab, setActiveTab] = useState<'youtube' | 'upload' | 'sample'>('youtube');
+  const [activeTab, setActiveTab] = useState<'youtube' | 'instagram' | 'upload' | 'sample'>('youtube');
   const [youtubeUrl, setYoutubeUrl] = useState<string>(PROMPT_SAMPLE_YOUTUBE_URL);
+  const [instagramUrl, setInstagramUrl] = useState<string>(PROMPT_SAMPLE_INSTAGRAM_URL);
   const [directUrl, setDirectUrl] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>('openai/gpt-oss-20b');
@@ -58,13 +62,38 @@ export const InputSection: React.FC<InputSectionProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'youtube') {
-      if (!youtubeUrl.trim()) return;
-      onStartPipeline({
-        youtubeUrl: youtubeUrl.trim(),
-        model: selectedModel,
-        cookiesText: cookiesText.trim()
-      });
+    if (activeTab === 'instagram') {
+      const trimmed = instagramUrl.trim();
+      if (!trimmed) return;
+      if (extractYoutubeId(trimmed)) {
+        onStartPipeline({
+          youtubeUrl: trimmed,
+          model: selectedModel,
+          cookiesText: cookiesText.trim()
+        });
+      } else {
+        onStartPipeline({
+          instagramUrl: trimmed,
+          model: selectedModel,
+          cookiesText: cookiesText.trim()
+        });
+      }
+    } else if (activeTab === 'youtube') {
+      const trimmed = youtubeUrl.trim();
+      if (!trimmed) return;
+      if (isInstagramUrl(trimmed)) {
+        onStartPipeline({
+          instagramUrl: trimmed,
+          model: selectedModel,
+          cookiesText: cookiesText.trim()
+        });
+      } else {
+        onStartPipeline({
+          youtubeUrl: trimmed,
+          model: selectedModel,
+          cookiesText: cookiesText.trim()
+        });
+      }
     } else if (activeTab === 'upload') {
       if (!selectedFile) return;
       onStartPipeline({
@@ -82,12 +111,12 @@ export const InputSection: React.FC<InputSectionProps> = ({
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
       {/* Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+      <div className="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 mb-4 gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
           <button
             type="button"
             onClick={() => setActiveTab('youtube')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'youtube'
                 ? 'bg-red-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
@@ -98,8 +127,20 @@ export const InputSection: React.FC<InputSectionProps> = ({
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab('instagram')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              activeTab === 'instagram'
+                ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+            }`}
+          >
+            <Instagram className="w-4 h-4" />
+            <span>Instagram</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('upload')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'upload'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
@@ -111,7 +152,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('sample')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               activeTab === 'sample'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
@@ -123,18 +164,30 @@ export const InputSection: React.FC<InputSectionProps> = ({
         </div>
 
         {/* Preset quick buttons */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => {
               setActiveTab('youtube');
               setYoutubeUrl(PROMPT_SAMPLE_YOUTUBE_URL);
             }}
-            className="text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border border-slate-200 transition-colors flex items-center gap-1.5 font-medium"
+            className="text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border border-slate-200 transition-colors flex items-center gap-1 font-medium"
             title="OpenAI 대담 샘플 링크"
           >
-            <Zap className="w-3 h-3 text-amber-500" />
-            <span>샘플 URL</span>
+            <Youtube className="w-3 h-3 text-red-500" />
+            <span>YT 샘플</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('instagram');
+              setInstagramUrl(PROMPT_SAMPLE_INSTAGRAM_URL);
+            }}
+            className="text-[11px] text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md border border-slate-200 transition-colors flex items-center gap-1 font-medium"
+            title="인스타그램 릴스 샘플 링크"
+          >
+            <Instagram className="w-3 h-3 text-pink-500" />
+            <span>IG 릴스 샘플</span>
           </button>
         </div>
       </div>
@@ -179,7 +232,49 @@ export const InputSection: React.FC<InputSectionProps> = ({
           </div>
         )}
 
-        {/* Tab 2: File Upload */}
+        {/* Tab 2: Instagram */}
+        {activeTab === 'instagram' && (
+          <div className="space-y-2.5">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Instagram className="w-5 h-5 text-pink-500" />
+              </div>
+              <input
+                type="text"
+                value={instagramUrl}
+                onChange={(e) => setInstagramUrl(e.target.value)}
+                placeholder="인스타그램 릴스 또는 게시물 링크 입력 (https://www.instagram.com/reel/...)"
+                className="w-full pl-11 pr-20 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-pink-500/30 focus:border-pink-500 transition-all font-mono"
+                disabled={isProcessing}
+              />
+              {instagramUrl && (
+                <button
+                  type="button"
+                  onClick={() => setInstagramUrl('')}
+                  className="absolute inset-y-0 right-3 flex items-center text-xs text-slate-400 hover:text-slate-600 font-medium"
+                >
+                  지우기
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+              <div className="flex items-center gap-2">
+                <span>샘플:</span>
+                <button
+                  type="button"
+                  onClick={() => setInstagramUrl(PROMPT_SAMPLE_INSTAGRAM_URL)}
+                  className="text-pink-600 hover:underline font-mono font-medium truncate max-w-[280px]"
+                >
+                  RESCENE 릴스 (Dc2zOgkhFtc)
+                </button>
+              </div>
+              <span className="text-[11px] text-slate-400 hidden sm:inline">릴스(Reel), 게시물(Post) 지원</span>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: File Upload */}
         {activeTab === 'upload' && (
           <div className="space-y-3">
             <div
@@ -231,7 +326,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
           </div>
         )}
 
-        {/* Tab 3: Sample Demo */}
+        {/* Tab 4: Sample Demo */}
         {activeTab === 'sample' && (
           <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-slate-700 space-y-1">
             <div className="flex items-center gap-1.5 text-emerald-800 font-semibold text-xs">
@@ -280,7 +375,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs text-slate-700">
             <div className="flex items-center gap-1.5 font-medium text-slate-800">
               <KeyRound className="w-3.5 h-3.5 text-amber-600" />
-              <span>YouTube 쿠키 (선택)</span>
+              <span>YouTube / Instagram 쿠키 (선택)</span>
             </div>
             <textarea
               value={cookiesText}
@@ -300,6 +395,12 @@ export const InputSection: React.FC<InputSectionProps> = ({
             className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center justify-center gap-2 transition-all ${
               isProcessing
                 ? 'bg-slate-300 cursor-not-allowed text-slate-500'
+                : activeTab === 'instagram'
+                ? 'bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 hover:opacity-95 active:scale-[0.98]'
+                : activeTab === 'upload'
+                ? 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98]'
+                : activeTab === 'sample'
+                ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98]'
                 : 'bg-red-600 hover:bg-red-700 active:scale-[0.98]'
             }`}
           >

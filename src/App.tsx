@@ -7,7 +7,8 @@ import { SubtitleEditor } from './components/SubtitleEditor';
 import { InfoModal } from './components/InfoModal';
 import { SubtitleSegment, PipelineProgress, ServerStatus } from './types';
 import { SAMPLE_SEGMENTS } from './data/sampleData';
-import { extractYoutubeId } from './utils/srtParser';
+import { extractYoutubeId, isInstagramUrl, extractInstagramShortcode } from './utils/srtParser';
+import { safeFetchJson } from './utils/apiHelper';
 import { CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export default function App() {
@@ -90,6 +91,7 @@ export default function App() {
   // Run full pipeline
   const handleStartPipeline = async (params: {
     youtubeUrl?: string;
+    instagramUrl?: string;
     directUrl?: string;
     mediaFile?: File | null;
     useSample?: boolean;
@@ -100,7 +102,14 @@ export default function App() {
     setPipelineLogs([]);
 
     // Immediately update player with user's selected input
-    if (params.youtubeUrl) {
+    if (params.instagramUrl || isInstagramUrl(params.youtubeUrl || params.directUrl || '')) {
+      const targetUrl = (params.instagramUrl || params.youtubeUrl || params.directUrl || '').trim();
+      const shortcode = extractInstagramShortcode(targetUrl);
+      setYoutubeVideoId(null);
+      setVideoUrl('');
+      setSoftsubVideoUrl('');
+      setVideoTitle(shortcode ? `Instagram Reel (${shortcode})` : 'Instagram 영상');
+    } else if (params.youtubeUrl) {
       const ytId = extractYoutubeId(params.youtubeUrl);
       setYoutubeVideoId(ytId);
       setVideoUrl(params.youtubeUrl);
@@ -137,6 +146,7 @@ export default function App() {
       if (params.mediaFile) {
         formData.append('mediaFile', params.mediaFile);
       }
+      if (params.instagramUrl) formData.append('instagramUrl', params.instagramUrl);
       if (params.youtubeUrl) formData.append('youtubeUrl', params.youtubeUrl);
       if (params.directUrl) formData.append('directUrl', params.directUrl);
       if (params.useSample) formData.append('useSample', 'true');
@@ -174,7 +184,7 @@ export default function App() {
         }));
       }, 6000);
 
-      const response = await fetch('/api/pipeline/process', {
+      const { ok, data, error } = await safeFetchJson('/api/pipeline/process', {
         method: 'POST',
         body: formData
       });
@@ -183,10 +193,8 @@ export default function App() {
       clearTimeout(timer2);
       clearTimeout(timer3);
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || '파이프라인 처리에 실패했습니다.');
+      if (!ok || !data || !data.success) {
+        throw new Error(error || data?.error || '파이프라인 처리에 실패했습니다.');
       }
 
       // Step 5: Completed
@@ -201,8 +209,8 @@ export default function App() {
       if (data.logs) setPipelineLogs(data.logs);
       if (data.youtubeVideoId) {
         setYoutubeVideoId(data.youtubeVideoId);
-      } else if (data.videoUrl && extractYoutubeId(data.videoUrl)) {
-        setYoutubeVideoId(extractYoutubeId(data.videoUrl));
+      } else {
+        setYoutubeVideoId(null);
       }
       if (data.videoUrl) setVideoUrl(data.videoUrl);
       setSoftsubVideoUrl(data.softsubVideoUrl || '');
@@ -232,7 +240,7 @@ export default function App() {
   const handleRemuxVideo = async () => {
     setIsRemuxing(true);
     try {
-      const res = await fetch('/api/subtitles/remux', {
+      const { ok, data, error } = await safeFetchJson('/api/subtitles/remux', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -240,9 +248,8 @@ export default function App() {
           segments
         })
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || '재합성에 실패했습니다.');
+      if (!ok || !data || !data.success) {
+        throw new Error(error || data?.error || '재합성에 실패했습니다.');
       }
 
       if (data.softsubVideoUrl) {

@@ -1,6 +1,6 @@
 {
   "name": "YouTube 자막 생성 및 편집기",
-  "description": "YouTube 동영상의 음성을 Groq Whisper로 인식하고 AI로 번역하여 자막을 합성하고 직접 편집할 수 있는 스튜디오",
+  "description": "YouTube 및 Instagram 동영상의 음성을 Groq Whisper로 인식하고 AI로 번역하여 자막을 합성하고 직접 편집할 수 있는 스튜디오",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
